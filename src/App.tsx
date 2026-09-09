@@ -1,15 +1,18 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
 interface PlanetData {
   name: string;
   nameRu: string;
-  diameter: number; // km
-  distanceFromSun: number; // million km
-  orbitalPeriod: number; // Earth days
+  diameter: number;
+  distanceFromSun: number;
+  orbitalPeriod: number;
   color: string;
-  size: number; // visual size in px
-  orbitRadius: number; // visual orbit radius in px
+  glowColor: string;
+  size: number;
+  orbitRadius: number;
   description: string;
+  texture: string;
+  ringColor?: string;
 }
 
 const planets: PlanetData[] = [
@@ -20,9 +23,11 @@ const planets: PlanetData[] = [
     distanceFromSun: 57.9,
     orbitalPeriod: 88,
     color: '#b5b5b5',
-    size: 8,
-    orbitRadius: 70,
-    description: 'Самая маленькая и ближайшая к Солнцу планета. Поверхность покрыта кратерами.',
+    glowColor: '#8a8a8a',
+    size: 18,
+    orbitRadius: 80,
+    description: 'Самая маленькая и ближайшая к Солнцу планета. Поверхность покрыта кратерами, напоминает Луну.',
+    texture: 'radial-gradient(circle at 35% 35%, #d4d4d4 0%, #b5b5b5 30%, #7a7a7a 70%, #4a4a4a 100%)',
   },
   {
     name: 'Venus',
@@ -31,9 +36,11 @@ const planets: PlanetData[] = [
     distanceFromSun: 108.2,
     orbitalPeriod: 225,
     color: '#e8cda0',
-    size: 14,
-    orbitRadius: 110,
-    description: 'Самая горячая планета из-за парникового эффекта. Вращается в обратном направлении.',
+    glowColor: '#ffcc66',
+    size: 28,
+    orbitRadius: 130,
+    description: 'Самая горячая планета из-за парникового эффекта. Плотная атмосфера из углекислого газа скрывает поверхность.',
+    texture: 'radial-gradient(circle at 35% 30%, #fff0cc 0%, #e8cda0 25%, #c9a060 60%, #8a6530 100%)',
   },
   {
     name: 'Earth',
@@ -42,9 +49,11 @@ const planets: PlanetData[] = [
     distanceFromSun: 149.6,
     orbitalPeriod: 365,
     color: '#4da6ff',
-    size: 15,
-    orbitRadius: 155,
-    description: 'Наш дом. Единственная известная планета с жизнью. Имеет один спутник — Луну.',
+    glowColor: '#4488ff',
+    size: 30,
+    orbitRadius: 185,
+    description: 'Наш дом. Единственная известная планета с жизнью. 71% поверхности покрыт водой.',
+    texture: 'radial-gradient(circle at 35% 30%, #8fd4ff 0%, #4da6ff 20%, #2277cc 50%, #1a5588 75%, #0d3355 100%)',
   },
   {
     name: 'Mars',
@@ -53,9 +62,11 @@ const planets: PlanetData[] = [
     distanceFromSun: 227.9,
     orbitalPeriod: 687,
     color: '#e07050',
-    size: 11,
-    orbitRadius: 200,
-    description: 'Красная планета. Имеет самый высокий вулкан в Солнечной системе — Олимп.',
+    glowColor: '#ff6644',
+    size: 22,
+    orbitRadius: 240,
+    description: 'Красная планета. Имеет самый высокий вулкан — Олимп (21 км) и гигантский каньон Долины Маринер.',
+    texture: 'radial-gradient(circle at 35% 30%, #ff9977 0%, #e07050 30%, #aa4430 65%, #662211 100%)',
   },
   {
     name: 'Jupiter',
@@ -64,9 +75,11 @@ const planets: PlanetData[] = [
     distanceFromSun: 778.6,
     orbitalPeriod: 4333,
     color: '#d4a574',
-    size: 32,
-    orbitRadius: 270,
-    description: 'Самая большая планета. Газовый гигант с Большим Красным Пятном — огромным штормом.',
+    glowColor: '#cc8844',
+    size: 56,
+    orbitRadius: 320,
+    description: 'Самая большая планета. Газовый гигант с Большим Красным Пятном — штормом, бушующим уже 400 лет.',
+    texture: 'radial-gradient(circle at 40% 35%, #f0d4a8 0%, #d4a574 20%, #b88050 45%, #8a5530 75%, #5a3018 100%)',
   },
   {
     name: 'Saturn',
@@ -75,9 +88,12 @@ const planets: PlanetData[] = [
     distanceFromSun: 1433.5,
     orbitalPeriod: 10759,
     color: '#f0d890',
-    size: 28,
-    orbitRadius: 340,
-    description: 'Знаменита своими кольцами из льда и камней. Плотность меньше воды.',
+    glowColor: '#ddbb55',
+    size: 48,
+    orbitRadius: 400,
+    description: 'Знаменита своими кольцами из льда и камней. Плотность меньше воды — мог бы плавать в океане!',
+    texture: 'radial-gradient(circle at 40% 35%, #fff4cc 0%, #f0d890 20%, #c8a850 50%, #8a7030 80%, #5a4818 100%)',
+    ringColor: '#e8d090',
   },
   {
     name: 'Uranus',
@@ -86,9 +102,11 @@ const planets: PlanetData[] = [
     distanceFromSun: 2872.5,
     orbitalPeriod: 30687,
     color: '#7de8e8',
-    size: 22,
-    orbitRadius: 400,
-    description: 'Ледяной гигант, вращающийся «на боку». Имеет тонкие кольца.',
+    glowColor: '#44cccc',
+    size: 38,
+    orbitRadius: 460,
+    description: 'Ледяной гигант, вращающийся «на боку». Ось наклонена на 98°. Имеет тонкие тёмные кольца.',
+    texture: 'radial-gradient(circle at 38% 32%, #b0ffff 0%, #7de8e8 25%, #44aaaa 55%, #226666 85%, #113838 100%)',
   },
   {
     name: 'Neptune',
@@ -97,28 +115,68 @@ const planets: PlanetData[] = [
     distanceFromSun: 4495.1,
     orbitalPeriod: 60190,
     color: '#4466ff',
-    size: 21,
-    orbitRadius: 455,
-    description: 'Самая далёкая планета. Самые сильные ветры в Солнечной системе — до 2100 км/ч.',
+    glowColor: '#3355ee',
+    size: 36,
+    orbitRadius: 520,
+    description: 'Самая далёкая планета. Ветры достигают 2100 км/ч — самые сильные в Солнечной системе.',
+    texture: 'radial-gradient(circle at 38% 32%, #8899ff 0%, #4466ff 25%, #2244cc 55%, #112288 85%, #081144 100%)',
   },
 ];
+
+// Seeded random for consistent star positions
+function seededRandom(seed: number) {
+  const x = Math.sin(seed * 9301 + 49297) * 49297;
+  return x - Math.floor(x);
+}
 
 function App() {
   const [isPlaying, setIsPlaying] = useState(true);
   const [speed, setSpeed] = useState(1);
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetData | null>(null);
-  const [angles, setAngles] = useState<number[]>(planets.map(() => Math.random() * Math.PI * 2));
+  const [angles, setAngles] = useState<number[]>(() => planets.map((_, i) => (i * Math.PI * 2) / planets.length + seededRandom(i) * 1.5));
   const [scale, setScale] = useState(0.7);
+  const [showIntro, setShowIntro] = useState(true);
   const animationRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
+
+  // Generate stars once
+  const stars = useMemo(() => {
+    return Array.from({ length: 350 }, (_, i) => ({
+      x: seededRandom(i * 3 + 1) * 100,
+      y: seededRandom(i * 3 + 2) * 100,
+      size: seededRandom(i * 3 + 3) * 2.5 + 0.5,
+      opacity: seededRandom(i * 7) * 0.7 + 0.3,
+      duration: seededRandom(i * 11) * 4 + 2,
+      delay: seededRandom(i * 13) * 6,
+      isColored: seededRandom(i * 17) > 0.85,
+      color: ['#aaccff', '#ffddaa', '#ffaaaa', '#aaffcc'][Math.floor(seededRandom(i * 19) * 4)],
+    }));
+  }, []);
+
+  // Nebula clouds
+  const nebulae = useMemo(() => {
+    return Array.from({ length: 6 }, (_, i) => ({
+      x: seededRandom(i * 5 + 100) * 100,
+      y: seededRandom(i * 5 + 101) * 100,
+      size: seededRandom(i * 5 + 102) * 400 + 200,
+      color: ['#1a0033', '#001a33', '#0a1a00', '#1a0011', '#00111a', '#0d001a'][i],
+      opacity: 0.15 + seededRandom(i * 5 + 103) * 0.1,
+    }));
+  }, []);
+
+  // Intro animation
+  useEffect(() => {
+    const timer = setTimeout(() => setShowIntro(false), 2500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Responsive scaling
   useEffect(() => {
     const updateScale = () => {
       const w = window.innerWidth;
-      const h = window.innerHeight - 200;
+      const h = window.innerHeight - 120;
       const minDim = Math.min(w, h);
-      setScale(Math.min(1, minDim / 1050));
+      setScale(Math.min(1.1, minDim / 1100));
     };
     updateScale();
     window.addEventListener('resize', updateScale);
@@ -133,7 +191,7 @@ function App() {
     if (isPlaying) {
       setAngles((prev) =>
         prev.map((angle, i) => {
-          const baseSpeed = (2 * Math.PI) / (planets[i].orbitalPeriod / 10);
+          const baseSpeed = (2 * Math.PI) / (planets[i].orbitalPeriod / 8);
           return angle + baseSpeed * speed * delta;
         })
       );
@@ -149,60 +207,173 @@ function App() {
     };
   }, [animate]);
 
-  const centerX = 500;
-  const centerY = 500;
+  const centerX = 550;
+  const centerY = 550;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white overflow-hidden relative">
-      {/* Stars background */}
+    <div className="min-h-screen bg-black text-white overflow-hidden relative select-none">
+      {/* Intro overlay */}
+      <div
+        className={`fixed inset-0 z-[100] bg-black flex items-center justify-center transition-opacity duration-1000 pointer-events-none ${
+          showIntro ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
+        <div className="text-center">
+          <h1
+            className="text-5xl md:text-7xl font-thin tracking-[0.3em] uppercase text-white/90"
+            style={{ fontFamily: "'Inter', sans-serif", letterSpacing: '0.3em' }}
+          >
+            Солнечная
+          </h1>
+          <h1
+            className="text-5xl md:text-7xl font-thin tracking-[0.3em] uppercase text-white/90 mt-2"
+            style={{ fontFamily: "'Inter', sans-serif", letterSpacing: '0.3em' }}
+          >
+            Система
+          </h1>
+          <div className="mt-8 w-48 h-[1px] bg-gradient-to-r from-transparent via-amber-400/60 to-transparent mx-auto" />
+        </div>
+      </div>
+
+      {/* Deep space background */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_#0a0a1a_0%,_#050510_40%,_#000000_100%)]" />
+
+      {/* Nebula clouds */}
+      {nebulae.map((n, i) => (
+        <div
+          key={`nebula-${i}`}
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            width: `${n.size}px`,
+            height: `${n.size}px`,
+            left: `${n.x}%`,
+            top: `${n.y}%`,
+            background: `radial-gradient(circle, ${n.color}${Math.round(n.opacity * 255).toString(16).padStart(2, '0')} 0%, transparent 70%)`,
+            transform: 'translate(-50%, -50%)',
+            filter: 'blur(40px)',
+          }}
+        />
+      ))}
+
+      {/* Stars */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {Array.from({ length: 200 }).map((_, i) => (
+        {stars.map((star, i) => (
           <div
             key={i}
-            className="absolute rounded-full bg-white"
+            className="absolute rounded-full"
             style={{
-              width: Math.random() * 2 + 1,
-              height: Math.random() * 2 + 1,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              opacity: Math.random() * 0.8 + 0.2,
-              animation: `twinkle ${Math.random() * 3 + 2}s ease-in-out infinite`,
-              animationDelay: `${Math.random() * 5}s`,
+              width: star.size,
+              height: star.size,
+              left: `${star.x}%`,
+              top: `${star.y}%`,
+              backgroundColor: star.isColored ? star.color : 'white',
+              opacity: star.opacity,
+              animation: `twinkle ${star.duration}s ease-in-out infinite`,
+              animationDelay: `${star.delay}s`,
+              boxShadow: star.size > 2 ? `0 0 ${star.size * 2}px ${star.isColored ? star.color : 'white'}40` : 'none',
             }}
           />
         ))}
       </div>
 
+      {/* Vignette */}
+      <div
+        className="absolute inset-0 pointer-events-none z-[5]"
+        style={{
+          background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%)',
+        }}
+      />
+
+      {/* Cinematic letterbox bars */}
+      <div className="absolute top-0 left-0 right-0 h-[3vh] bg-gradient-to-b from-black to-transparent z-[6] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-[3vh] bg-gradient-to-t from-black to-transparent z-[6] pointer-events-none" />
+
       {/* Header */}
-      <header className="relative z-10 text-center pt-4 pb-2">
-        <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-yellow-300 via-orange-300 to-yellow-400 bg-clip-text text-transparent">
-          ☀️ Солнечная система
+      <header className="relative z-10 text-center pt-[4vh] pb-2">
+        <h1
+          className="text-2xl md:text-3xl font-extralight tracking-[0.25em] uppercase text-white/80"
+          style={{ textShadow: '0 0 30px rgba(255,200,100,0.3)' }}
+        >
+          Солнечная система
         </h1>
-        <p className="text-gray-400 text-sm mt-1">Нажмите на планету для получения информации</p>
+        <div className="mt-2 w-32 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent mx-auto" />
+        <p className="text-white/30 text-xs mt-2 tracking-widest uppercase">
+          Нажмите на планету для информации
+        </p>
       </header>
 
       {/* Solar System Visualization */}
-      <div className="relative flex items-center justify-center" style={{ height: 'calc(100vh - 200px)' }}>
+      <div className="relative flex items-center justify-center" style={{ height: 'calc(100vh - 140px)' }}>
         <div
           className="relative"
           style={{
-            width: '1000px',
-            height: '1000px',
+            width: '1100px',
+            height: '1100px',
             transform: `scale(${scale})`,
             transformOrigin: 'center center',
           }}
         >
+          {/* Sun corona */}
+          <div
+            className="absolute rounded-full"
+            style={{
+              width: '200px',
+              height: '200px',
+              left: `${centerX - 100}px`,
+              top: `${centerY - 100}px`,
+              background: 'radial-gradient(circle, rgba(255,150,0,0.15) 0%, transparent 70%)',
+              animation: 'coronaPulse 4s ease-in-out infinite',
+            }}
+          />
+          <div
+            className="absolute rounded-full"
+            style={{
+              width: '300px',
+              height: '300px',
+              left: `${centerX - 150}px`,
+              top: `${centerY - 150}px`,
+              background: 'radial-gradient(circle, rgba(255,100,0,0.08) 0%, transparent 70%)',
+              animation: 'coronaPulse 6s ease-in-out infinite reverse',
+            }}
+          />
+
           {/* Sun */}
           <div
-            className="absolute rounded-full cursor-pointer"
+            className="absolute rounded-full"
             style={{
-              width: '60px',
-              height: '60px',
-              left: `${centerX - 30}px`,
-              top: `${centerY - 30}px`,
-              background: 'radial-gradient(circle, #fff700 0%, #ff8c00 50%, #ff4500 100%)',
-              boxShadow: '0 0 40px #ff8c00, 0 0 80px #ff6600, 0 0 120px #ff4500',
-              animation: 'pulse 3s ease-in-out infinite',
+              width: '80px',
+              height: '80px',
+              left: `${centerX - 40}px`,
+              top: `${centerY - 40}px`,
+              background: 'radial-gradient(circle at 40% 40%, #ffffff 0%, #fff700 15%, #ffaa00 40%, #ff6600 70%, #cc3300 100%)',
+              boxShadow: '0 0 30px 5px #ff8800, 0 0 60px 10px #ff660080, 0 0 100px 20px #ff440040, 0 0 200px 40px #ff220020',
+              animation: 'sunPulse 3s ease-in-out infinite',
+            }}
+          />
+
+          {/* Lens flare from sun */}
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              width: '4px',
+              height: '200px',
+              left: `${centerX - 2}px`,
+              top: `${centerY - 100}px`,
+              background: 'linear-gradient(to bottom, transparent, rgba(255,200,100,0.1), transparent)',
+              animation: 'flareRotate 20s linear infinite',
+              transformOrigin: 'center center',
+            }}
+          />
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              width: '200px',
+              height: '4px',
+              left: `${centerX - 100}px`,
+              top: `${centerY - 2}px`,
+              background: 'linear-gradient(to right, transparent, rgba(255,200,100,0.1), transparent)',
+              animation: 'flareRotate 20s linear infinite',
+              transformOrigin: 'center center',
             }}
           />
 
@@ -210,12 +381,14 @@ function App() {
           {planets.map((planet, i) => (
             <div
               key={`orbit-${i}`}
-              className="absolute rounded-full border border-gray-700/40"
+              className="absolute rounded-full"
               style={{
                 width: `${planet.orbitRadius * 2}px`,
                 height: `${planet.orbitRadius * 2}px`,
                 left: `${centerX - planet.orbitRadius}px`,
                 top: `${centerY - planet.orbitRadius}px`,
+                border: `1px solid rgba(255,255,255,${selectedPlanet?.name === planet.name ? 0.15 : 0.05})`,
+                transition: 'border-color 0.5s ease',
               }}
             />
           ))}
@@ -229,45 +402,139 @@ function App() {
             return (
               <div
                 key={`planet-${i}`}
-                className={`absolute rounded-full cursor-pointer transition-transform duration-200 ${
-                  isSelected ? 'scale-150' : 'hover:scale-125'
+                className={`absolute cursor-pointer transition-all duration-300 ease-out ${
+                  isSelected ? 'scale-125' : 'hover:scale-110'
                 }`}
                 style={{
                   width: `${planet.size}px`,
                   height: `${planet.size}px`,
                   left: `${x - planet.size / 2}px`,
                   top: `${y - planet.size / 2}px`,
-                  background: `radial-gradient(circle at 30% 30%, ${planet.color}, ${adjustColor(planet.color, -40)})`,
-                  boxShadow: isSelected
-                    ? `0 0 15px ${planet.color}, 0 0 30px ${planet.color}`
-                    : `0 0 8px ${planet.color}40`,
                   zIndex: isSelected ? 20 : 10,
                 }}
                 onClick={() => setSelectedPlanet(isSelected ? null : planet)}
                 title={planet.nameRu}
               >
+                {/* Planet glow */}
+                <div
+                  className="absolute rounded-full"
+                  style={{
+                    width: `${planet.size * 2.5}px`,
+                    height: `${planet.size * 2.5}px`,
+                    left: `${-(planet.size * 0.75)}px`,
+                    top: `${-(planet.size * 0.75)}px`,
+                    background: `radial-gradient(circle, ${planet.glowColor}20 0%, transparent 70%)`,
+                    opacity: isSelected ? 1 : 0.5,
+                    transition: 'opacity 0.3s',
+                  }}
+                />
+
+                {/* Planet body */}
+                <div
+                  className="absolute rounded-full w-full h-full"
+                  style={{
+                    background: planet.texture,
+                    boxShadow: isSelected
+                      ? `0 0 ${planet.size * 0.8}px ${planet.glowColor}80, 0 0 ${planet.size * 1.5}px ${planet.glowColor}40, inset -${planet.size * 0.15}px -${planet.size * 0.1}px ${planet.size * 0.3}px rgba(0,0,0,0.6)`
+                      : `0 0 ${planet.size * 0.4}px ${planet.glowColor}30, inset -${planet.size * 0.12}px -${planet.size * 0.08}px ${planet.size * 0.25}px rgba(0,0,0,0.5)`,
+                    transition: 'box-shadow 0.3s',
+                  }}
+                />
+
+                {/* Planet atmosphere rim light */}
+                <div
+                  className="absolute rounded-full w-full h-full"
+                  style={{
+                    background: `radial-gradient(circle at 25% 25%, rgba(255,255,255,0.15) 0%, transparent 50%)`,
+                  }}
+                />
+
                 {/* Saturn's rings */}
                 {planet.name === 'Saturn' && (
+                  <>
+                    <div
+                      className="absolute rounded-full"
+                      style={{
+                        width: `${planet.size * 2.2}px`,
+                        height: `${planet.size * 0.6}px`,
+                        left: `${-(planet.size * 0.6)}px`,
+                        top: `${planet.size * 0.2}px`,
+                        transform: 'rotate(-15deg)',
+                        border: `3px solid ${planet.ringColor}60`,
+                        boxShadow: `0 0 8px ${planet.ringColor}30, inset 0 0 4px ${planet.ringColor}20`,
+                      }}
+                    />
+                    <div
+                      className="absolute rounded-full"
+                      style={{
+                        width: `${planet.size * 1.9}px`,
+                        height: `${planet.size * 0.5}px`,
+                        left: `${-(planet.size * 0.45)}px`,
+                        top: `${planet.size * 0.25}px`,
+                        transform: 'rotate(-15deg)',
+                        border: `2px solid ${planet.ringColor}40`,
+                      }}
+                    />
+                  </>
+                )}
+
+                {/* Earth's moon hint */}
+                {planet.name === 'Earth' && (
                   <div
-                    className="absolute rounded-full border-2 border-yellow-200/60"
+                    className="absolute rounded-full"
                     style={{
-                      width: `${planet.size * 1.8}px`,
-                      height: `${planet.size * 0.5}px`,
-                      left: `${-(planet.size * 0.4)}px`,
-                      top: `${planet.size * 0.25}px`,
-                      transform: 'rotate(-20deg)',
+                      width: '6px',
+                      height: '6px',
+                      right: '-10px',
+                      top: '2px',
+                      background: 'radial-gradient(circle at 40% 40%, #ddd, #888)',
+                      boxShadow: '0 0 4px rgba(200,200,200,0.3)',
                     }}
                   />
                 )}
+
+                {/* Jupiter bands */}
+                {planet.name === 'Jupiter' && (
+                  <div
+                    className="absolute rounded-full overflow-hidden"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      top: 0,
+                      left: 0,
+                    }}
+                  >
+                    <div className="absolute w-full" style={{ top: '30%', height: '8%', background: 'rgba(180,100,50,0.3)' }} />
+                    <div className="absolute w-full" style={{ top: '45%', height: '12%', background: 'rgba(200,120,60,0.25)' }} />
+                    <div className="absolute w-full" style={{ top: '62%', height: '6%', background: 'rgba(160,80,40,0.3)' }} />
+                    {/* Great Red Spot */}
+                    <div
+                      className="absolute rounded-full"
+                      style={{
+                        width: '20%',
+                        height: '12%',
+                        left: '55%',
+                        top: '50%',
+                        background: 'radial-gradient(ellipse, #cc4422 0%, #aa3311 50%, transparent 100%)',
+                      }}
+                    />
+                  </div>
+                )}
+
                 {/* Planet label */}
                 <div
-                  className="absolute text-xs text-gray-300 whitespace-nowrap pointer-events-none"
+                  className="absolute whitespace-nowrap pointer-events-none"
                   style={{
                     left: '50%',
-                    top: `${planet.size + 4}px`,
+                    top: `${planet.size + 8}px`,
                     transform: 'translateX(-50%)',
-                    fontSize: '10px',
-                    textShadow: '0 0 4px black',
+                    fontSize: '11px',
+                    fontWeight: 300,
+                    letterSpacing: '0.1em',
+                    color: isSelected ? planet.color : 'rgba(255,255,255,0.5)',
+                    textShadow: `0 0 10px ${planet.glowColor}60, 0 1px 3px rgba(0,0,0,0.8)`,
+                    textTransform: 'uppercase',
+                    transition: 'color 0.3s',
                   }}
                 >
                   {planet.nameRu}
@@ -279,87 +546,144 @@ function App() {
       </div>
 
       {/* Info Panel */}
-      {selectedPlanet && (
-        <div className="fixed top-4 right-4 z-50 bg-gray-900/95 backdrop-blur-md border border-gray-700 rounded-xl p-5 max-w-sm shadow-2xl">
-          <button
-            onClick={() => setSelectedPlanet(null)}
-            className="absolute top-2 right-3 text-gray-400 hover:text-white text-xl"
+      <div
+        className={`fixed top-[50%] right-4 z-50 transition-all duration-500 ease-out ${
+          selectedPlanet ? 'translate-x-0 opacity-100' : 'translate-x-[120%] opacity-0'
+        }`}
+        style={{ transform: selectedPlanet ? 'translateY(-50%)' : 'translateY(-50%) translateX(120%)' }}
+      >
+        {selectedPlanet && (
+          <div
+            className="relative rounded-2xl overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, rgba(15,15,30,0.95) 0%, rgba(5,5,15,0.98) 100%)',
+              backdropFilter: 'blur(20px)',
+              border: `1px solid ${selectedPlanet.glowColor}20`,
+              boxShadow: `0 0 40px ${selectedPlanet.glowColor}10, 0 20px 60px rgba(0,0,0,0.5)`,
+              width: '320px',
+            }}
           >
-            ✕
-          </button>
-          <div className="flex items-center gap-3 mb-3">
+            {/* Top accent line */}
             <div
-              className="rounded-full"
+              className="absolute top-0 left-0 right-0 h-[1px]"
               style={{
-                width: '40px',
-                height: '40px',
-                background: `radial-gradient(circle at 30% 30%, ${selectedPlanet.color}, ${adjustColor(selectedPlanet.color, -40)})`,
-                boxShadow: `0 0 15px ${selectedPlanet.color}80`,
+                background: `linear-gradient(90deg, transparent, ${selectedPlanet.color}60, transparent)`,
               }}
             />
-            <div>
-              <h2 className="text-xl font-bold text-white">{selectedPlanet.nameRu}</h2>
-              <p className="text-gray-400 text-xs">{selectedPlanet.name}</p>
+
+            <button
+              onClick={() => setSelectedPlanet(null)}
+              className="absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all z-10"
+            >
+              ✕
+            </button>
+
+            <div className="p-6">
+              {/* Planet header */}
+              <div className="flex items-center gap-4 mb-5">
+                <div
+                  className="rounded-full flex-shrink-0"
+                  style={{
+                    width: '56px',
+                    height: '56px',
+                    background: selectedPlanet.texture,
+                    boxShadow: `0 0 20px ${selectedPlanet.glowColor}50, 0 0 40px ${selectedPlanet.glowColor}20`,
+                  }}
+                />
+                <div>
+                  <h2
+                    className="text-2xl font-light tracking-wider uppercase"
+                    style={{ color: selectedPlanet.color, textShadow: `0 0 20px ${selectedPlanet.glowColor}40` }}
+                  >
+                    {selectedPlanet.nameRu}
+                  </h2>
+                  <p className="text-white/30 text-xs tracking-widest uppercase">{selectedPlanet.name}</p>
+                </div>
+              </div>
+
+              <p className="text-white/60 text-sm leading-relaxed mb-5 font-light">
+                {selectedPlanet.description}
+              </p>
+
+              {/* Stats */}
+              <div className="grid grid-cols-2 gap-2.5">
+                <StatCard
+                  label="Диаметр"
+                  value={`${selectedPlanet.diameter.toLocaleString()} км`}
+                  color={selectedPlanet.color}
+                />
+                <StatCard
+                  label="До Солнца"
+                  value={`${selectedPlanet.distanceFromSun} млн км`}
+                  color={selectedPlanet.color}
+                />
+                <StatCard
+                  label="Год"
+                  value={formatPeriod(selectedPlanet.orbitalPeriod)}
+                  color={selectedPlanet.color}
+                />
+                <StatCard
+                  label="Расст. (а.е.)"
+                  value={`${(selectedPlanet.distanceFromSun / 149.6).toFixed(2)} а.е.`}
+                  color={selectedPlanet.color}
+                />
+              </div>
             </div>
-          </div>
-          <p className="text-gray-300 text-sm mb-4">{selectedPlanet.description}</p>
-          <div className="grid grid-cols-2 gap-3">
-            <InfoCard label="Диаметр" value={`${selectedPlanet.diameter.toLocaleString()} км`} icon="📏" />
-            <InfoCard
-              label="Расстояние"
-              value={`${selectedPlanet.distanceFromSun} млн км`}
-              icon="🌍"
-            />
-            <InfoCard
-              label="Орбитальный период"
-              value={formatPeriod(selectedPlanet.orbitalPeriod)}
-              icon="🔄"
-            />
-            <InfoCard
-              label="Расстояние (а.е.)"
-              value={`${(selectedPlanet.distanceFromSun / 149.6).toFixed(2)} а.е.`}
-              icon="📐"
+
+            {/* Bottom accent */}
+            <div
+              className="absolute bottom-0 left-0 right-0 h-[1px]"
+              style={{
+                background: `linear-gradient(90deg, transparent, ${selectedPlanet.color}30, transparent)`,
+              }}
             />
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Controls */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-gray-900/90 backdrop-blur-md border-t border-gray-700 px-4 py-3">
-        <div className="max-w-2xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+      <div
+        className="fixed bottom-0 left-0 right-0 z-50 px-4 py-3"
+        style={{
+          background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 60%, transparent 100%)',
+        }}
+      >
+        <div className="max-w-3xl mx-auto flex items-center justify-center gap-6 flex-wrap">
           {/* Play/Pause */}
           <button
             onClick={() => setIsPlaying(!isPlaying)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-600 transition-colors"
+            className="group flex items-center gap-2.5 px-5 py-2.5 rounded-full transition-all duration-300"
+            style={{
+              background: isPlaying ? 'rgba(255,255,255,0.05)' : 'rgba(255,200,100,0.1)',
+              border: `1px solid ${isPlaying ? 'rgba(255,255,255,0.1)' : 'rgba(255,200,100,0.3)'}`,
+              boxShadow: isPlaying ? 'none' : '0 0 20px rgba(255,200,100,0.1)',
+            }}
           >
-            {isPlaying ? (
-              <>
-                <span className="text-lg">⏸️</span>
-                <span className="text-sm">Пауза</span>
-              </>
-            ) : (
-              <>
-                <span className="text-lg">▶️</span>
-                <span className="text-sm">Воспроизвести</span>
-              </>
-            )}
+            <span className="text-base transition-transform group-hover:scale-110">
+              {isPlaying ? '⏸' : '▶'}
+            </span>
+            <span className="text-xs tracking-widest uppercase text-white/60 font-light">
+              {isPlaying ? 'Пауза' : 'Старт'}
+            </span>
           </button>
 
           {/* Speed Control */}
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-400">Скорость:</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] tracking-widest uppercase text-white/30 mr-1">Скорость</span>
             <div className="flex gap-1">
               {[0.25, 0.5, 1, 2, 5, 10].map((s) => (
                 <button
                   key={s}
                   onClick={() => setSpeed(s)}
-                  className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                    speed === s
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-600'
-                  }`}
+                  className="px-3 py-1.5 rounded-full text-[11px] font-light tracking-wider transition-all duration-300"
+                  style={{
+                    background: speed === s ? 'rgba(255,200,100,0.15)' : 'rgba(255,255,255,0.03)',
+                    border: `1px solid ${speed === s ? 'rgba(255,200,100,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                    color: speed === s ? '#ffcc66' : 'rgba(255,255,255,0.4)',
+                    boxShadow: speed === s ? '0 0 10px rgba(255,200,100,0.1)' : 'none',
+                  }}
                 >
-                  {s}x
+                  {s}×
                 </button>
               ))}
             </div>
@@ -368,14 +692,18 @@ function App() {
           {/* Reset */}
           <button
             onClick={() => {
-              setAngles(planets.map(() => Math.random() * Math.PI * 2));
+              setAngles(planets.map((_, i) => (i * Math.PI * 2) / planets.length));
               setSpeed(1);
               setIsPlaying(true);
             }}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-600 transition-colors"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full transition-all duration-300"
+            style={{
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}
           >
-            <span className="text-lg">🔄</span>
-            <span className="text-sm">Сброс</span>
+            <span className="text-base">↺</span>
+            <span className="text-xs tracking-widest uppercase text-white/40 font-light">Сброс</span>
           </button>
         </div>
       </div>
@@ -383,42 +711,57 @@ function App() {
       {/* CSS Animations */}
       <style>{`
         @keyframes twinkle {
-          0%, 100% { opacity: 0.3; }
-          50% { opacity: 1; }
+          0%, 100% { opacity: 0.2; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.3); }
         }
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); box-shadow: 0 0 40px #ff8c00, 0 0 80px #ff6600, 0 0 120px #ff4500; }
-          50% { transform: scale(1.05); box-shadow: 0 0 50px #ff8c00, 0 0 100px #ff6600, 0 0 150px #ff4500; }
+        @keyframes sunPulse {
+          0%, 100% { 
+            transform: scale(1);
+            box-shadow: 0 0 30px 5px #ff8800, 0 0 60px 10px #ff660080, 0 0 100px 20px #ff440040, 0 0 200px 40px #ff220020;
+          }
+          50% { 
+            transform: scale(1.03);
+            box-shadow: 0 0 40px 8px #ff8800, 0 0 80px 15px #ff660080, 0 0 130px 30px #ff440040, 0 0 250px 50px #ff220020;
+          }
+        }
+        @keyframes coronaPulse {
+          0%, 100% { transform: scale(1); opacity: 0.6; }
+          50% { transform: scale(1.1); opacity: 1; }
+        }
+        @keyframes flareRotate {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        @keyframes slideIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
         }
       `}</style>
     </div>
   );
 }
 
-function InfoCard({ label, value, icon }: { label: string; value: string; icon: string }) {
-  return (
-    <div className="bg-gray-800/80 rounded-lg p-2.5 border border-gray-700">
-      <div className="flex items-center gap-1.5 mb-1">
-        <span className="text-sm">{icon}</span>
-        <span className="text-xs text-gray-400">{label}</span>
-      </div>
-      <p className="text-sm font-semibold text-white">{value}</p>
-    </div>
-  );
-}
-
-function adjustColor(hex: string, amount: number): string {
-  const num = parseInt(hex.replace('#', ''), 16);
-  const r = Math.max(0, Math.min(255, ((num >> 16) & 0xff) + amount));
-  const g = Math.max(0, Math.min(255, ((num >> 8) & 0xff) + amount));
-  const b = Math.max(0, Math.min(255, (num & 0xff) + amount));
-  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
-}
-
 function formatPeriod(days: number): string {
   if (days < 365) return `${days} дней`;
   const years = (days / 365.25).toFixed(1);
   return `${years} лет`;
+}
+
+function StatCard({ label, value, color }: { label: string; value: string; color: string }) {
+  return (
+    <div
+      className="rounded-xl p-3"
+      style={{
+        background: 'rgba(255,255,255,0.03)',
+        border: '1px solid rgba(255,255,255,0.06)',
+      }}
+    >
+      <p className="text-[10px] tracking-widest uppercase text-white/30 mb-1">{label}</p>
+      <p className="text-sm font-light" style={{ color: `${color}dd` }}>
+        {value}
+      </p>
+    </div>
+  );
 }
 
 export default App;
